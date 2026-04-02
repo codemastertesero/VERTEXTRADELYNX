@@ -1,0 +1,109 @@
+.services-page { }
+
+.page-hero__orb {
+  position: absolute;
+  top: -200px; left: 50%;
+  transform: translateX(-50%);
+  width: 700px; height: 400px;
+  background: radial-gradient(ellipse, rgba(21,101,192,0.3), transparent 70%);
+  pointer-events: none;
+}
+
+.svc-block {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 60px;
+  align-items: center;
+  margin-bottom: 80px;
+  padding-bottom: 80px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.svc-block:last-child { border-bottom: none; margin-bottom: 0; }
+
+.svc-block--reverse { direction: rtl; }
+.svc-block--reverse > * { direction: ltr; }
+
+.svc-block__content {
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+}
+
+.svc-block__icon {
+  width: 64px; height: 64px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--c) 12%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c);
+  margin-bottom: 20px;
+}
+
+.svc-features {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.svc-feature {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.8);
+}
+
+.svc-block__visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.svc-block__card-big {
+  width: 300px; height: 300px;
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--c) 8%, rgba(255,255,255,0.03));
+  border: 1px solid color-mix(in srgb, var(--c) 25%, transparent);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: var(--c);
+  position: relative;
+  overflow: hidden;
+}
+.svc-block__card-big::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--c) 15%, transparent), transparent 70%);
+}
+
+.svc-block__number {
+  font-size: 56px;
+  font-weight: 900;
+  opacity: 0.08;
+  position: absolute;
+  bottom: 12px;
+  right: 20px;
+  line-height: 1;
+  color: white;
+}
+
+.supply-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.supply-card { padding: 32px; }
+
+@media (max-width: 900px) {
+  .svc-block { grid-template-columns: 1fr; direction: ltr; }
+  .svc-block--reverse { direction: ltr; }
+  .svc-block__visual { display: none; }
+  .supply-grid { grid-template-columns: 1fr; }
+}
