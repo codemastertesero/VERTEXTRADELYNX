@@ -31,7 +31,7 @@ app.post("/api/enquiry", async (req, res) => {
 
   const mailToAdmin = {
     from: `"Vertex TradeLynx Website" <${process.env.EMAIL_USER}>`,
-    to: "tejasd851@gmail.com",
+    to: "chavannilesh987@gmail.com",
     subject: `New Freight Enquiry from ${name}`,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f4f7fb;padding:30px;border-radius:12px;">
