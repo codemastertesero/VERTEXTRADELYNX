@@ -6,28 +6,106 @@ const nodemailer = require("nodemailer");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// ============== LOGGING HELPER ==============
+const log = (level, message, data = null) => {
+  const timestamp = new Date().toISOString();
+  const logEntry = `[${timestamp}] [${level}] ${message}`;
+  if (data) {
+    console.log(logEntry, JSON.stringify(data, null, 2));
+  } else {
+    console.log(logEntry);
+  }
+};
+
+// ============== STARTUP LOGS ==============
+log("INFO", "🚀 Server starting...");
+log("INFO", `Environment: ${process.env.NODE_ENV || "development"}`);
+log("INFO", `Port: ${PORT}`);
+log("INFO", `Frontend URL: ${process.env.FRONTEND_URL || "http://localhost:3000"}`);
+log("INFO", `Email User configured: ${process.env.EMAIL_USER ? "✅ YES" : "❌ NO"}`);
+log("INFO", `Email Pass configured: ${process.env.EMAIL_PASS ? "✅ YES" : "❌ NO"}`);
+log("INFO", `Email Service: ${process.env.EMAIL_SERVICE || "gmail"}`);
+
+// ============== MIDDLEWARE ==============
 app.use(cors({
   origin: process.env.FRONTEND_URL || "http://localhost:3000",
   credentials: true,
 }));
 app.use(express.json());
 
-// Email transporter — configure via .env
+// ============== REQUEST LOGGER MIDDLEWARE ==============
+// This logs EVERY incoming request
+app.use((req, res, next) => {
+  log("REQUEST", `${req.method} ${req.url}`, {
+    ip: req.ip || req.connection.remoteAddress,
+    headers: {
+      origin: req.headers.origin,
+      "content-type": req.headers["content-type"],
+      "user-agent": req.headers["user-agent"],
+    },
+    body: req.body && Object.keys(req.body).length > 0 ? req.body : "empty",
+  });
+  
+  // Log response when it finishes
+  const startTime = Date.now();
+  res.on("finish", () => {
+    const duration = Date.now() - startTime;
+    log("RESPONSE", `${req.method} ${req.url} → ${res.statusCode} (${duration}ms)`);
+  });
+  
+  next();
+});
+
+// ============== EMAIL TRANSPORTER ==============
 const transporter = nodemailer.createTransport({
   service: process.env.EMAIL_SERVICE || "gmail",
   auth: {
-    user: process.env.EMAIL_USER,       // your sending Gmail / SMTP user
-    pass: process.env.EMAIL_PASS,       // app password or SMTP password
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 });
 
+// Verify transporter on startup
+transporter.verify((error, success) => {
+  if (error) {
+    log("ERROR", "❌ Email transporter verification FAILED", { error: error.message });
+  } else {
+    log("INFO", "✅ Email transporter verified — ready to send emails");
+  }
+});
+
+// ============== ROUTES ==============
+
 // POST /api/enquiry
 app.post("/api/enquiry", async (req, res) => {
+  log("INFO", "📩 === NEW ENQUIRY RECEIVED ===");
+  
   const { name, email, phone, service, origin, destination, message } = req.body;
 
+  log("INFO", "Enquiry details:", {
+    name: name || "MISSING",
+    email: email || "MISSING",
+    phone: phone || "not provided",
+    service: service || "not specified",
+    origin: origin || "not provided",
+    destination: destination || "not provided",
+    message: message ? message.substring(0, 100) + "..." : "MISSING",
+  });
+
+  // Validation
   if (!name || !email || !message) {
-    return res.status(400).json({ success: false, error: "Name, email and message are required." });
+    log("WARN", "⚠️ Validation failed — missing required fields", {
+      hasName: !!name,
+      hasEmail: !!email,
+      hasMessage: !!message,
+    });
+    return res.status(400).json({
+      success: false,
+      error: "Name, email and message are required.",
+    });
   }
+
+  log("INFO", "✅ Validation passed");
 
   const mailToAdmin = {
     from: `"Vertex TradeLynx Website" <${process.env.EMAIL_USER}>`,
@@ -76,15 +154,69 @@ app.post("/api/enquiry", async (req, res) => {
   };
 
   try {
-    await transporter.sendMail(mailToAdmin);
-    await transporter.sendMail(mailToClient);
+    log("INFO", "📧 Sending admin notification email...");
+    const adminResult = await transporter.sendMail(mailToAdmin);
+    log("INFO", "✅ Admin email sent", {
+      messageId: adminResult.messageId,
+      to: "chavannilesh987@gmail.com",
+    });
+
+    log("INFO", "📧 Sending client confirmation email...");
+    const clientResult = await transporter.sendMail(mailToClient);
+    log("INFO", "✅ Client email sent", {
+      messageId: clientResult.messageId,
+      to: email,
+    });
+
+    log("INFO", "🎉 === ENQUIRY PROCESSED SUCCESSFULLY ===");
     return res.json({ success: true, message: "Enquiry submitted successfully!" });
   } catch (err) {
-    console.error("Mail error:", err);
-    return res.status(500).json({ success: false, error: "Failed to send email. Please try again." });
+    log("ERROR", "❌ === EMAIL SENDING FAILED ===", {
+      errorMessage: err.message,
+      errorCode: err.code,
+      errorCommand: err.command,
+      fullError: err.toString(),
+    });
+    return res.status(500).json({
+      success: false,
+      error: "Failed to send email. Please try again.",
+    });
   }
 });
 
-app.get("/api/health", (req, res) => res.json({ status: "ok" }));
+// Health check
+app.get("/api/health", (req, res) => {
+  log("INFO", "💚 Health check hit");
+  res.json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    emailConfigured: !!(process.env.EMAIL_USER && process.env.EMAIL_PASS),
+  });
+});
 
-app.listen(PORT, () => console.log(`Vertex TradeLynx backend running on port ${PORT}`));
+// ============== CATCH-ALL FOR UNKNOWN ROUTES ==============
+app.use("*", (req, res) => {
+  log("WARN", `⚠️ 404 — Unknown route hit: ${req.method} ${req.originalUrl}`);
+  res.status(404).json({
+    success: false,
+    error: `Route ${req.originalUrl} not found`,
+  });
+});
+
+// ============== GLOBAL ERROR HANDLER ==============
+app.use((err, req, res, next) => {
+  log("ERROR", "💥 Unhandled error", {
+    message: err.message,
+    stack: err.stack,
+  });
+  res.status(500).json({ success: false, error: "Internal server error" });
+});
+
+// ============== START SERVER ==============
+app.listen(PORT, () => {
+  log("INFO", `✅ Vertex TradeLynx backend running on port ${PORT}`);
+  log("INFO", "📋 Available routes:");
+  log("INFO", "   GET  /api/health");
+  log("INFO", "   POST /api/enquiry");
+});
