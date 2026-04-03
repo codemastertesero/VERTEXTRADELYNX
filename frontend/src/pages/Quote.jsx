@@ -39,7 +39,6 @@ export default function Quote() {
   });
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
-
   const handleSubmit = async () => {
     setStatus("loading");
     const message = `
@@ -63,7 +62,10 @@ Additional Notes: ${form.message}
     `.trim();
 
     try {
-      const res = await fetch("/api/enquiry", {
+      // ✅ FIX: Use environment variable for backend URL
+      const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+
+      const res = await fetch(`${API_URL}/api/enquiry`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -84,7 +86,6 @@ Additional Notes: ${form.message}
       setErrMsg("Network error. Please try again.");
     }
   };
-
   return (
     <div>
       <section className="page-hero">
