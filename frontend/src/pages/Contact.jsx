@@ -13,7 +13,7 @@ export default function Contact() {
     e.preventDefault();
     setStatus("loading");
     try {
-      const res = await fetch("/api/enquiry", {
+      const res = await fetch("https://vertextradelynx-backend.onrender.com/api/enquiry", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
