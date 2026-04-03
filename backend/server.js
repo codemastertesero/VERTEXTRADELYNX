@@ -83,7 +83,7 @@ app.post("/api/enquiry", async (req, res) => {
     // Send email to admin
     log("INFO", "📧 Sending admin notification email...");
     const adminEmail = await resend.emails.send({
-      from: "Vertex TradeLynx <vertextradelynx.com>", // Change after domain verification
+      from: "Vertex TradeLynx <onboarding@vertextradelynx.com>", // Change after domain verification
       to: process.env.ADMIN_EMAIL || "chavannilesh987@gmail.com",
       subject: `New Freight Enquiry from ${name}`,
       html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f4f7fb;padding:30px;border-radius:12px;">
@@ -109,7 +109,7 @@ app.post("/api/enquiry", async (req, res) => {
     // Send confirmation to client
     log("INFO", "📧 Sending client confirmation email...");
     const clientEmail = await resend.emails.send({
-      from: "Vertex TradeLynx <vertextradelynx.com>",
+      from: "Vertex TradeLynx <onboarding@vertextradelynx.com>",
       to: email,
       subject: "Thank you for your enquiry — Vertex TradeLynx",
       html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f4f7fb;padding:30px;border-radius:12px;">
