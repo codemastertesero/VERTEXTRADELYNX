@@ -62,10 +62,7 @@ Additional Notes: ${form.message}
     `.trim();
 
     try {
-      // ✅ FIX: Use environment variable for backend URL
-      const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
-
-      const res = await fetch(`${API_URL}/api/enquiry`, {
+      const res = await fetch("https://vertextradelynx-backend.onrender.com/api/enquiry", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
